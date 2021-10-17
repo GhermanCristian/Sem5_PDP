@@ -1,43 +1,24 @@
-import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Sale implements Runnable{
-    private HashMap<Product, Integer> initialInventory;
-    private HashMap<Product, Integer> productsToSale;
-    private final ReentrantLock lock;
+public class Sale implements Runnable {
+    private Inventory inventory;
+    private final Inventory inventorySubset;
     private double profit;
+    private final ReentrantLock lock;
 
-    public HashMap<Product, Integer> getProductsToSale() {
-        return this.productsToSale;
-    }
-
-    public Sale(HashMap<Product, Integer> initialInventory, HashMap<Product, Integer> productsToSale) {
-        this.initialInventory = initialInventory;
-        this.productsToSale = productsToSale;
+    public Sale(Inventory inventory, Inventory inventorySubset) {
+        this.inventory = inventory;
+        this.inventorySubset = inventorySubset;
+        this.profit = 0d;
         this.lock = new ReentrantLock();
     }
 
-    private void removeProductOccurrencesFromInventory(Product productToSale) {
-        if (! this.initialInventory.containsKey(productToSale)) {
-            throw new RuntimeException("Product does not exist"); // automatically unlocks
-        }
-
-        int previousQuantity = this.initialInventory.get(productToSale);
-        int productCountToSale = this.productsToSale.get(productToSale);
-
-        if (productCountToSale > previousQuantity) {
-            throw new RuntimeException("Not enough products"); // automatically unlocks
-        }
-
-        this.initialInventory.replace(productToSale, previousQuantity - productCountToSale);
-        if (previousQuantity == productCountToSale) {
-            this.initialInventory.remove(productToSale);
-        }
-    }
-
-    private void computeProfit() {
-        this.profit = 0d;
-        this.productsToSale.forEach((product, quantity) -> this.profit += product.getPrice() * quantity);
+    private void sellProduct(Product productForSale) {
+        this.lock.lock();
+        int quantity = this.inventorySubset.getQuantityOfProduct(productForSale);
+        this.inventory.removeProduct(productForSale, quantity);
+        this.profit += productForSale.getPrice() * quantity;
+        this.lock.unlock();
     }
 
     public double getProfit() {
@@ -46,11 +27,6 @@ public class Sale implements Runnable{
 
     @Override
     public void run() {
-        this.productsToSale.keySet().forEach(productToSale -> {
-            this.lock.lock();
-            this.removeProductOccurrencesFromInventory(productToSale);
-            this.lock.unlock();
-        });
-        this.computeProfit();
+        this.inventorySubset.getProducts().forEach(this::sellProduct);
     }
 }

@@ -1,57 +1,68 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
-    private static HashMap<Product, Integer> loadProductsWithQuantities() {
-        HashMap<Product, Integer> productsWithQuantities = new HashMap<>();
+    private static Inventory loadInventory() {
+        Inventory inventory = new Inventory();
         File file = new File("products.txt");
+        
         try {
             Scanner scanner = new Scanner(file);
             while (scanner.hasNext()) {
-                productsWithQuantities.put(new Product(scanner.next(), scanner.nextDouble()), scanner.nextInt() * 100);
+                inventory.addProduct(new Product(scanner.next(), scanner.nextDouble()), scanner.nextInt() * 10000);
             }
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        return productsWithQuantities;
+        
+        return inventory;
     }
 
-    private static HashMap<Product, Integer> generateProductsToSale(HashMap<Product, Integer> allProducts) {
+    private static Inventory generateInventorySubsets(Inventory inventory) {
         Random random = new Random();
-        int productCount = random.nextInt(9) + 1;
-        ArrayList<Product> productsAsArray = new ArrayList<>(allProducts.keySet());
-        HashMap<Product, Integer> productsToSale = new HashMap<>();
+        int productCount = random.nextInt(99) + 1;
+        ArrayList<Product> productsAsArray = new ArrayList<>(inventory.getProducts());
+        Inventory inventorySubset = new Inventory();
+        
         for (int i = 0; i < productCount; i++) {
             boolean foundNewProduct = false;
             do {
                 Product selectedProduct = productsAsArray.get(random.nextInt(productsAsArray.size() - 1));
-                if (! productsToSale.containsKey(selectedProduct)) {
+                if (! inventorySubset.containsProduct(selectedProduct)) {
                     foundNewProduct = true;
-                    int quantity = random.nextInt(9) + 1;
-                    productsToSale.put(selectedProduct, quantity);
+                    int quantity = random.nextInt(99) + 1;
+                    inventorySubset.addProduct(selectedProduct, quantity);
                 }
             }
             while (!foundNewProduct);
         }
-        return productsToSale;
+        
+        return inventorySubset;
     }
 
-    public static void main(String[] args) {
-        final int THREAD_COUNT = 5;
-        HashMap<Product, Integer> products = loadProductsWithQuantities();
+    private static void run() {
+        final int THREAD_COUNT = 200;
+        Inventory inventory = loadInventory();
+        double totalInitialValue = inventory.computeValue();
+
         ArrayList<Sale> sales = new ArrayList<>();
         ArrayList<Thread> threads = new ArrayList<>();
 
         for (int i = 0; i < THREAD_COUNT; i++) {
-            sales.add(new Sale(products, generateProductsToSale(products)));
+            sales.add(new Sale(inventory, generateInventorySubsets(inventory)));
         }
 
-        sales.forEach(sale -> threads.add(new Thread(sale)));
+        InventoryChecker inventoryChecker = new InventoryChecker(totalInitialValue, inventory, sales);
+
+        for (int i = 0; i < sales.size(); i++) {
+            if (i % 10 == 0) {
+                threads.add(new Thread(inventoryChecker::checkInventory));
+            }
+            threads.add(new Thread(sales.get(i)));
+        }
+
         threads.forEach(Thread::start);
         for (Thread thread : threads) {
             try {
@@ -61,5 +72,17 @@ public class Main {
                 e.printStackTrace();
             }
         }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        inventoryChecker.checkInventory();
     }
+
+    public static void main(String[] args) {
+        run();
+    }
+
 }
