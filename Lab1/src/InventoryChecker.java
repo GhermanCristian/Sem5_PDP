@@ -6,7 +6,7 @@ public class InventoryChecker {
     public final Inventory inventory;
     public final ArrayList<Sale> sales;
     private static final ReentrantLock lock = new ReentrantLock();
-    
+
     public InventoryChecker(double totalInitialValue, Inventory inventory, ArrayList<Sale> sales) {
         this.totalInitialValue = totalInitialValue;
         this.inventory = inventory;
@@ -18,10 +18,11 @@ public class InventoryChecker {
         double difference = this.totalInitialValue - sales.stream().mapToDouble(Sale::getProfit).sum() - this.inventory.computeValue();
         lock.unlock();
 
-        System.out.println(difference);
-        if (Math.abs(difference) > 0.001) {
-            //throw new RuntimeException("Invalid inventory");
+        if (Math.abs(difference) > 0.01) {
+            System.out.println("Invalid inventory");
         }
-        System.out.println("Check complete");
+        else {
+            System.out.println("Inventory is ok");
+        }
     }
 }

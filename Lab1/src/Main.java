@@ -43,26 +43,26 @@ public class Main {
     }
 
     private static void run() {
-        final int THREAD_COUNT = 200;
+        final int THREAD_COUNT = 1000;
         Inventory inventory = loadInventory();
         double totalInitialValue = inventory.computeValue();
 
         ArrayList<Sale> sales = new ArrayList<>();
-        ArrayList<Thread> threads = new ArrayList<>();
-
         for (int i = 0; i < THREAD_COUNT; i++) {
             sales.add(new Sale(inventory, generateInventorySubsets(inventory)));
         }
 
         InventoryChecker inventoryChecker = new InventoryChecker(totalInitialValue, inventory, sales);
-
-        for (int i = 0; i < sales.size(); i++) {
-            if (i % 10 == 0) {
-                threads.add(new Thread(inventoryChecker::checkInventory));
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                inventoryChecker.checkInventory();
             }
-            threads.add(new Thread(sales.get(i)));
-        }
+        }, 0, 1);
 
+        ArrayList<Thread> threads = new ArrayList<>();
+        sales.forEach(sale -> threads.add(new Thread(sale)));
         threads.forEach(Thread::start);
         for (Thread thread : threads) {
             try {
@@ -73,16 +73,17 @@ public class Main {
             }
         }
 
+        timer.cancel();
         try {
-            Thread.sleep(1000);
+            Thread.sleep(1000); // ensure all running checks have finished
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        System.out.println("All sales have finished. Result of the final check - ");
         inventoryChecker.checkInventory();
     }
 
     public static void main(String[] args) {
         run();
     }
-
 }
