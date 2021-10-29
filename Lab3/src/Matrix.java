@@ -1,12 +1,26 @@
+import java.util.Random;
+
 public class Matrix {
     private int[][] matrix;
     private final int rows;
     private final int columns;
 
+    private final int MAX_INITIAL_VALUE = 100;
+    private final int MIN_INITIAL_VALUE = 10;
+
     public Matrix(int rows, int columns) {
         this.rows = rows;
         this.columns = columns;
         this.matrix = new int[rows][columns];
+    }
+
+    public void fillMatrixRandomly() {
+        Random randomGenerator = new Random();
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.columns; j++) {
+                this.matrix[i][j] = randomGenerator.nextInt(this.MAX_INITIAL_VALUE - this.MIN_INITIAL_VALUE) + this.MIN_INITIAL_VALUE;
+            }
+        }
     }
 
     public int getRows() {
