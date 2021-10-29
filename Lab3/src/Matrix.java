@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Random;
 
 public class Matrix {
@@ -43,5 +44,14 @@ public class Matrix {
             throw new IndexOutOfBoundsException("Invalid coordinates");
         }
         this.matrix[x][y] = newValue;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < this.rows; i++) {
+            result.append(Arrays.toString(this.matrix[i])).append("\n");
+        }
+        return result.toString();
     }
 }
