@@ -44,7 +44,7 @@ public class Main {
                         readyToReceiveProduct.await();
                     }
                     totalSum += partialResult;
-                    partialResult = -1;
+                    partialResult = NULL;
                     readyToSendProduct.signal(); // tell the producer that it can send a new product
                 }
                 catch (InterruptedException e) {
