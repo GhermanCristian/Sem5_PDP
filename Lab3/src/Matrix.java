@@ -24,6 +24,14 @@ public class Matrix {
         }
     }
 
+    public void reset() {
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.columns; j++) {
+                this.matrix[i][j] = 0;
+            }
+        }
+    }
+
     public int getRows() {
         return this.rows;
     }
