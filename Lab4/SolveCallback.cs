@@ -14,27 +14,24 @@ namespace Lab4 {
             IPAddress IP = Dns.GetHostEntry(this.hostURL.Split('/')[0]).AddressList[0];
             IPEndPoint endPoint = new IPEndPoint(IP, 80);
             Socket client = new Socket(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            Console.WriteLine("before begin connect");
             client.BeginConnect(endPoint, onConnected, new Payload(client, endPoint));
-            Console.WriteLine("after begin connect");
         }
 
         private void onConnected(IAsyncResult connectionPayload) {
-            Console.WriteLine("on connected");
             Payload payload = (Payload)connectionPayload.AsyncState;
-            byte[] getRequest = Encoding.ASCII.GetBytes("GET " + payload.endPoint + " HTTP/1.0\n" + "Host: " + this.hostURL.Split('/')[0] + "\n" + "Content-Length: 0\n");
+            String requestEndpoint = this.hostURL.Contains("/") ? this.hostURL.Substring(this.hostURL.IndexOf("/")) : "/";
+            String getRequestAsString = "GET " + requestEndpoint + " HTTP/1.1\r\nHost: " + this.hostURL.Split('/')[0] + "\r\nContent-Length: 0\r\n\r\n";
+            byte[] getRequest = Encoding.ASCII.GetBytes(getRequestAsString);
             payload.clientSocket.BeginSend(getRequest, 0, getRequest.Length, 0, onSend, payload);
         }
 
         private void onSend(IAsyncResult connectionPayload) {
-            Console.WriteLine("on send");
             Payload payload = (Payload)connectionPayload.AsyncState;
             int sentDataSize = payload.clientSocket.EndSend(connectionPayload);
-            payload.clientSocket.BeginReceive(payload.buffer, 0, 1024, 0, onReceive, payload);
+            payload.clientSocket.BeginReceive(payload.buffer, 0, 4096, 0, onReceive, payload);
         }
 
         private void onReceive(IAsyncResult connectionPayload) {
-            Console.WriteLine("on receive");
             Payload payload = (Payload)connectionPayload.AsyncState;
             int receivedDataSize = payload.clientSocket.EndReceive(connectionPayload);
             Console.WriteLine(Encoding.ASCII.GetString(payload.buffer, 0, receivedDataSize));
