@@ -8,7 +8,9 @@ namespace Lab4 {
             hosts.Add("www.cs.ubbcluj.ro/~motogna/LFTC");
             hosts.Add("www.cs.ubbcluj.ro/~rlupsa/edu/pdp/");
             hosts.Add("www.cs.ubbcluj.ro/~ilazar/ma/");
-            SolveCallback solveCallback = new SolveCallback(hosts);
+            //SolveCallback solveCallback = new (hosts);
+            //SolveTask solveTask = new (hosts);
+            SolveTaskAsync solveTaskAsync = new (hosts);
         }
     }
 }
