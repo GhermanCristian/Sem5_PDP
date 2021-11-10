@@ -12,25 +12,25 @@ namespace Lab4 {
             Thread.Sleep(1000);
         });
 
-        private void start(String host) {
+        private void start(string host) {
             IPAddress IP = Dns.GetHostEntry(host.Split('/')[0]).AddressList[0];
-            IPEndPoint endPoint = new IPEndPoint(IP, 80);
-            Socket client = new Socket(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            client.BeginConnect(endPoint, onConnected, new Payload(client, endPoint, host));
+            IPEndPoint endPoint = new(IP, 80);
+            Socket client = new(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            client.BeginConnect(endPoint, this.onConnected, new Payload(client, endPoint, host));
         }
 
         private void onConnected(IAsyncResult connectionPayload) {
             Payload payload = (Payload)connectionPayload.AsyncState;
-            String requestEndpoint = payload.host.Contains("/") ? payload.host.Substring(payload.host.IndexOf("/")) : "/";
-            String getRequestAsString = "GET " + requestEndpoint + " HTTP/1.1\r\nHost: " + payload.host.Split('/')[0] + "\r\nContent-Length: 0\r\n\r\n";
+            string requestEndpoint = payload.host.Contains("/") ? payload.host.Substring(payload.host.IndexOf("/")) : "/";
+            string getRequestAsString = "GET " + requestEndpoint + " HTTP/1.1\r\nHost: " + payload.host.Split('/')[0] + "\r\nContent-Length: 0\r\n\r\n";
             byte[] getRequest = Encoding.ASCII.GetBytes(getRequestAsString);
-            payload.clientSocket.BeginSend(getRequest, 0, getRequest.Length, 0, onSend, payload);
+            payload.clientSocket.BeginSend(getRequest, 0, getRequest.Length, 0, this.onSend, payload);
         }
 
         private void onSend(IAsyncResult connectionPayload) {
             Payload payload = (Payload)connectionPayload.AsyncState;
             int sentDataSize = payload.clientSocket.EndSend(connectionPayload);
-            payload.clientSocket.BeginReceive(payload.buffer, 0, 4096, 0, onReceive, payload);
+            payload.clientSocket.BeginReceive(payload.buffer, 0, 4096, 0, this.onReceive, payload);
         }
 
         private void onReceive(IAsyncResult connectionPayload) {
