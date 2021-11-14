@@ -18,13 +18,12 @@ namespace Lab4 {
             IPAddress IP = Dns.GetHostEntry(hostAsString.Split('/')[0]).AddressList[0];
             IPEndPoint endPoint = new(IP, 80);
             Socket client = new(IP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            int bufferSize = 4096;
-            byte[] buffer = new byte[bufferSize];
+            byte[] buffer = new byte[Common.BUFFER_SIZE];
 
             this.connect(client, endPoint).Wait();
             this.send(client, endPoint, hostAsString).Wait();
-            this.receive(client, buffer, bufferSize).Wait();
-            Console.WriteLine(Encoding.ASCII.GetString(buffer, 0, bufferSize));
+            this.receive(client, buffer).Wait();
+            Console.WriteLine(Encoding.ASCII.GetString(buffer, 0, Common.BUFFER_SIZE));
             client.Shutdown(SocketShutdown.Both);
             client.Close();
         }
@@ -42,16 +41,14 @@ namespace Lab4 {
 
         private Task send(Socket clientSocket, IPEndPoint endPoint, string host) {
             TaskCompletionSource<int> promise = new();
-            string requestEndpoint = host.Contains("/") ? host.Substring(host.IndexOf("/")) : "/";
-            string getRequestAsString = "GET " + requestEndpoint + " HTTP/1.1\r\nHost: " + host.Split('/')[0] + "\r\nContent-Length: 0\r\n\r\n";
-            byte[] getRequest = Encoding.ASCII.GetBytes(getRequestAsString);
+            byte[] getRequest = Common.getRequestContent(host);
             clientSocket.BeginSend(getRequest, 0, getRequest.Length, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndSend(ar)), null);
             return promise.Task;
         }
 
-        private Task receive(Socket clientSocket, byte[] buffer, int bufferSize) {
+        private Task receive(Socket clientSocket, byte[] buffer) {
             TaskCompletionSource<int> promise = new ();
-            clientSocket.BeginReceive(buffer, 0, bufferSize, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndSend(ar)), null);
+            clientSocket.BeginReceive(buffer, 0, Common.BUFFER_SIZE, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndSend(ar)), null);
             return promise.Task;
         }
     }

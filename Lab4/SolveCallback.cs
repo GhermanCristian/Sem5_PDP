@@ -21,9 +21,7 @@ namespace Lab4 {
 
         private void onConnected(IAsyncResult connectionPayload) {
             Payload payload = (Payload)connectionPayload.AsyncState;
-            string requestEndpoint = payload.host.Contains("/") ? payload.host.Substring(payload.host.IndexOf("/")) : "/";
-            string getRequestAsString = "GET " + requestEndpoint + " HTTP/1.1\r\nHost: " + payload.host.Split('/')[0] + "\r\nContent-Length: 0\r\n\r\n";
-            byte[] getRequest = Encoding.ASCII.GetBytes(getRequestAsString);
+            byte[] getRequest = Common.getRequestContent(payload.host);
             payload.clientSocket.BeginSend(getRequest, 0, getRequest.Length, 0, this.onSend, payload);
         }
 
