@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 
 namespace Lab4 {
     class SolveCallback {
         public SolveCallback(List<string> hosts) => hosts.ForEach(host => {
             this.start(host);
-            Thread.Sleep(1000);
+            Thread.Sleep(500);
         });
 
         private void start(string host) {
@@ -28,15 +27,15 @@ namespace Lab4 {
         private void onSend(IAsyncResult connectionPayload) {
             Payload payload = (Payload)connectionPayload.AsyncState;
             int sentDataSize = payload.clientSocket.EndSend(connectionPayload);
-            payload.clientSocket.BeginReceive(payload.buffer, 0, 4096, 0, this.onReceive, payload);
+            payload.clientSocket.BeginReceive(payload.buffer, 0, Common.BUFFER_SIZE, 0, this.onReceive, payload);
         }
 
         private void onReceive(IAsyncResult connectionPayload) {
             Payload payload = (Payload)connectionPayload.AsyncState;
-            int receivedDataSize = payload.clientSocket.EndReceive(connectionPayload);
-            Console.WriteLine(Encoding.ASCII.GetString(payload.buffer, 0, receivedDataSize));
+            payload.clientSocket.EndReceive(connectionPayload);
             payload.clientSocket.Shutdown(SocketShutdown.Both);
             payload.clientSocket.Close();
+            Common.interpretResponse(payload.buffer);
         }
     }
 }

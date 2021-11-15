@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lab4 {
@@ -23,9 +22,10 @@ namespace Lab4 {
             this.connect(client, endPoint).Wait();
             this.send(client, endPoint, hostAsString).Wait();
             this.receive(client, buffer).Wait();
-            Console.WriteLine(Encoding.ASCII.GetString(buffer, 0, Common.BUFFER_SIZE));
             client.Shutdown(SocketShutdown.Both);
             client.Close();
+
+            Common.interpretResponse(buffer);
         }
 
         private Task connect(Socket clientSocket, IPEndPoint endPoint) {
@@ -48,7 +48,7 @@ namespace Lab4 {
 
         private Task receive(Socket clientSocket, byte[] buffer) {
             TaskCompletionSource<int> promise = new ();
-            clientSocket.BeginReceive(buffer, 0, Common.BUFFER_SIZE, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndSend(ar)), null);
+            clientSocket.BeginReceive(buffer, 0, Common.BUFFER_SIZE, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndReceive(ar)), null);
             return promise.Task;
         }
     }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +11,7 @@ namespace Lab4 {
             List<Task> tasks = new();
             hosts.ForEach(host => tasks.Add(Task.Factory.StartNew(this.run, host)));
             Task.WaitAll(tasks.ToArray());
-            Thread.Sleep(2000);
+            Thread.Sleep(1000);
         }
 
         private async void run(object host) {
@@ -25,10 +24,10 @@ namespace Lab4 {
             await this.connect(client, endPoint);
             await this.send(client, endPoint, hostAsString);
             await this.receive(client, buffer);
-            Console.WriteLine(Encoding.ASCII.GetString(buffer, 0, Common.BUFFER_SIZE));
-            Console.WriteLine("\n\n\n");
             client.Shutdown(SocketShutdown.Both);
             client.Close();
+
+            Common.interpretResponse(buffer);
         }
 
         private async Task connect(Socket clientSocket, IPEndPoint endPoint) {
@@ -51,7 +50,7 @@ namespace Lab4 {
 
         private async Task receive(Socket clientSocket, byte[] buffer) {
             TaskCompletionSource<int> promise = new();
-            clientSocket.BeginReceive(buffer, 0, Common.BUFFER_SIZE, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndSend(ar)), null);
+            clientSocket.BeginReceive(buffer, 0, Common.BUFFER_SIZE, 0, (IAsyncResult ar) => promise.SetResult(clientSocket.EndReceive(ar)), null);
             await promise.Task;
         }
     }
