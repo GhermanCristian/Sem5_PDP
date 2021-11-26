@@ -1,12 +1,19 @@
 import java.util.List;
 
 public class Polynomial {
-    private final List<Integer> coefficients;
-    private final int degree;
+    private List<Integer> coefficients;
+    private int degree;
 
     public Polynomial(List<Integer> coefficients) {
         this.coefficients = coefficients;
         this.degree = this.coefficients.size() - 1; // polynomial of degree 0 still has a coefficient
+    }
+
+    public void removeLeadingZeroes() {
+        while (this.degree >= 0 && this.coefficients.get(this.degree) == 0) {
+            this.coefficients.remove(Integer.valueOf(this.degree));
+            this.degree--;
+        }
     }
 
     public void add(Polynomial other) {
@@ -21,6 +28,7 @@ public class Polynomial {
         for (int i = 0; i <= minDegree; i++) {
             this.coefficients.set(i, this.coefficients.get(i) + other.coefficients.get(i));
         }
+        this.removeLeadingZeroes();
     }
 
     public List<Integer> getCoefficients() {
