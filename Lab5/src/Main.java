@@ -1,7 +1,8 @@
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         /*Polynomial x = new Polynomial(Arrays.asList(1, 2)); // 2x + 1
         Polynomial y = new Polynomial(Arrays.asList(4, -2)); // -2x + 4
         // 4X ^ 0 + 6X ^ 1 + -4X ^ 2*/
@@ -12,5 +13,6 @@ public class Main {
         System.out.println(Multiplication.regularSequentialMultiplication(x, y));
         System.out.println(Multiplication.regularParallelMultiplication(x, y));
         System.out.println(Multiplication.karatsubaSequentialMultiplication(x, y));
+        System.out.println(Multiplication.karatsubaParallelMultiplication(x, y));
     }
 }
