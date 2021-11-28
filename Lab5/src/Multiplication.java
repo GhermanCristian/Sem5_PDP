@@ -64,7 +64,7 @@ public class Multiplication {
             return regularSequentialMultiplication(a, b);
         }
 
-        int halfLength = Math.max(a.getDegree(), b.getDegree()) / 2; // n
+        int halfLength = Math.min(a.getDegree(), b.getDegree()) / 2; // n
         Polynomial A2 = new Polynomial(a.getCoefficients().subList(0, halfLength));
         Polynomial A1 = new Polynomial(a.getCoefficients().subList(halfLength, a.getDegree() + 1));
         Polynomial B2 = new Polynomial(b.getCoefficients().subList(0, halfLength));
@@ -86,7 +86,7 @@ public class Multiplication {
             return regularSequentialMultiplication(a, b);
         }
 
-        int halfLength = Math.max(a.getDegree(), b.getDegree()) / 2; // n
+        int halfLength = Math.min(a.getDegree(), b.getDegree()) / 2; // n
         Polynomial A2 = new Polynomial(a.getCoefficients().subList(0, halfLength));
         Polynomial A1 = new Polynomial(a.getCoefficients().subList(halfLength, a.getDegree() + 1));
         Polynomial B2 = new Polynomial(b.getCoefficients().subList(0, halfLength));
@@ -100,14 +100,15 @@ public class Multiplication {
         temp1.add(A2); // A1 + A2
         Polynomial temp2 = new Polynomial(B1.getCoefficients());
         temp2.add(B2); // B1 + B2
-        Future<Polynomial> middleTermFuture = executorService.submit(() -> karatsubaParallelMultiplication(A2, B2));
+        Future<Polynomial> middleTermFuture = executorService.submit(() -> karatsubaParallelMultiplication(temp1, temp2));
 
         executorService.shutdown();
-        executorService.awaitTermination(2000, TimeUnit.MILLISECONDS);
 
         Polynomial A1B1 = A1B1Future.get();
         Polynomial A2B2 = A2B2Future.get();
         Polynomial middleTerm = middleTermFuture.get();
+
+        executorService.awaitTermination(2000, TimeUnit.MILLISECONDS);
 
         return computeMultiplicationResultFromParts(halfLength, A1B1, A2B2, middleTerm);
     }

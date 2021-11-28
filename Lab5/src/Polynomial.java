@@ -36,8 +36,8 @@ public class Polynomial {
     public void multiplyByMonomial(int monomialDegree) {
         for (int i = 0; i < monomialDegree; i++) {
             this.coefficients.add(0, 0);
-            this.degree++;
         }
+        this.degree += monomialDegree;
     }
 
     public void negate() {
