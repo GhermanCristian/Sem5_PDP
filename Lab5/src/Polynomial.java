@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class Polynomial {
@@ -5,13 +6,14 @@ public class Polynomial {
     private int degree;
 
     public Polynomial(List<Integer> coefficients) {
-        this.coefficients = coefficients;
+        this.coefficients = new ArrayList<>();
+        this.coefficients.addAll(coefficients);
         this.degree = this.coefficients.size() - 1; // polynomial of degree 0 still has a coefficient
     }
 
     public void removeLeadingZeroes() {
         while (this.degree >= 0 && this.coefficients.get(this.degree) == 0) {
-            this.coefficients.remove(Integer.valueOf(this.degree));
+            this.coefficients.remove(this.degree);
             this.degree--;
         }
     }
@@ -29,6 +31,19 @@ public class Polynomial {
             this.coefficients.set(i, this.coefficients.get(i) + other.coefficients.get(i));
         }
         this.removeLeadingZeroes();
+    }
+
+    public void multiplyByMonomial(int monomialDegree) {
+        for (int i = 0; i < monomialDegree; i++) {
+            this.coefficients.add(0, 0);
+            this.degree++;
+        }
+    }
+
+    public void negate() {
+        for (int i = 0; i < this.coefficients.size(); i++) {
+            this.coefficients.set(i, -this.coefficients.get(i));
+        }
     }
 
     public List<Integer> getCoefficients() {

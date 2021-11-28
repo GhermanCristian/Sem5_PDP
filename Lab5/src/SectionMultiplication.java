@@ -1,13 +1,13 @@
 import java.util.List;
 
-public class SequentialSectionMultiplication implements Runnable{
+public class SectionMultiplication implements Runnable{
     private final int start;
     private final int end;
     private final Polynomial a;
     private final Polynomial b;
     private final List<Integer> coefficients;
 
-    public SequentialSectionMultiplication(int start, int end, Polynomial a, Polynomial b, List<Integer> coefficients) {
+    public SectionMultiplication(int start, int end, Polynomial a, Polynomial b, List<Integer> coefficients) {
         this.start = start;
         this.end = end;
         this.a = a;
