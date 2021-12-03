@@ -49,11 +49,12 @@ public class HamiltonianSearchTask implements Runnable {
         }
 
         else {
-            this.graph.get(nextNode).forEach(outboundNeighbour -> {
-                if (! this.visited.get(outboundNeighbour)) {
+            for (Integer outboundNeighbour : this.graph.get(nextNode)) {
+                if (!this.visited.get(outboundNeighbour)) {
                     this.goToNode(outboundNeighbour);
+                    return;
                 }
-            });
+            }
         }
     }
 

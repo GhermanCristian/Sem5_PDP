@@ -1,38 +1,34 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
-    private static final int THREAD_COUNT = 4;
+    private static final int THREAD_COUNT = 5;
 
-    private static List<List<Integer>> getGraph1() {
+    private static List<List<Integer>> loadGraph(String path) throws FileNotFoundException {
         List<List<Integer>> graph = new ArrayList<>();
-        List<Integer> neighbours0 = new ArrayList<>();
-        neighbours0.add(1);
-        List<Integer> neighbours1 = new ArrayList<>();
-        neighbours1.add(2);
-        neighbours1.add(4);
-        List<Integer> neighbours2 = new ArrayList<>();
-        neighbours2.add(3);
-        List<Integer> neighbours3 = new ArrayList<>();
-        neighbours3.add(1);
-        neighbours3.add(4);
-        List<Integer> neighbours4 = new ArrayList<>();
-        neighbours4.add(0);
-        graph.add(neighbours0);
-        graph.add(neighbours1);
-        graph.add(neighbours2);
-        graph.add(neighbours3);
-        graph.add(neighbours4);
+        try (Scanner scanner = new Scanner(new File(path))) {
+            int size = Integer.parseInt(scanner.nextLine());
+            for (int i = 0; i < size; i++) {
+                graph.add(new ArrayList<>());
+            }
+            while (scanner.hasNextLine()) {
+                String[] splitEdge = scanner.nextLine().split(" ");
+                graph.get(Integer.parseInt(splitEdge[0])).add(Integer.parseInt(splitEdge[1]));
+            }
+        }
 
         return graph;
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        List<List<Integer>> graph = getGraph1();
+    public static void main(String[] args) throws InterruptedException, FileNotFoundException {
+        List<List<Integer>> graph = loadGraph("graphs/graph3.txt");
 
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
         AtomicBoolean foundHamiltonianCycle = new AtomicBoolean(false);
@@ -43,6 +39,11 @@ public class Main {
         executorService.shutdown();
         executorService.awaitTermination(20, TimeUnit.SECONDS);
 
-        System.out.println(output);
+        if (foundHamiltonianCycle.get()) {
+            System.out.println(output);
+        }
+        else {
+            System.out.println("No hamiltonian cycles");
+        }
     }
 }
