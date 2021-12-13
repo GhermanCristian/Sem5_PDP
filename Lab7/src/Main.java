@@ -7,11 +7,11 @@ public class Main {
     private static Polynomial buildResult(Object[] results) {
         int degree = ((Polynomial) results[0]).getDegree();
         Polynomial result = new Polynomial(degree);
-        for (int i = 0; i < result.getCoefficients().size(); i++) {
-            for (Object o : results) {
-                result.getCoefficients().set(i, result.getCoefficients().get(i) + ((Polynomial) o).getCoefficients().get(i));
-            }
+
+        for (Object polynomialParts: results) {
+            result.add((Polynomial) polynomialParts);
         }
+        result.removeLeadingZeroes();
         return result;
     }
 
@@ -39,15 +39,19 @@ public class Main {
 
         Polynomial result = buildResult(results);
         System.out.println("Result:\n" + result);
-        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + "ms");
+    }
+
+    private static DTO receiveDTO() {
+        Object[] currentSection = new Object[2];
+        MPI.COMM_WORLD.Recv(currentSection, 0, 1, MPI.OBJECT, 0, 0);
+        return (DTO) currentSection[0];
     }
 
     private static void multiplyRegularWrapper(int rank) {
         System.out.printf("Worker %d started\n", rank);
 
-        Object[] currentSection = new Object[2];
-        MPI.COMM_WORLD.Recv(currentSection, 0, 1, MPI.OBJECT, 0, 0);
-        DTO currentSectionDTO = (DTO) currentSection[0];
+        DTO currentSectionDTO = receiveDTO();
         Polynomial result = Multiplication.sectionMultiplication(currentSectionDTO.a, currentSectionDTO.b, currentSectionDTO.begin, currentSectionDTO.end);
 
         MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
@@ -55,10 +59,7 @@ public class Main {
 
     private static void multiplyKaratsubaWrapper(int rank) {
         System.out.printf("Worker %d started\n", rank);
-
-        Object[] currentSection = new Object[2];
-        MPI.COMM_WORLD.Recv(currentSection, 0, 1, MPI.OBJECT, 0, 0);
-        DTO currentSectionDTO = (DTO) currentSection[0];
+        DTO currentSectionDTO = receiveDTO();
 
         for (int i = 0; i < currentSectionDTO.begin; i++) {
             currentSectionDTO.a.getCoefficients().set(i, 0);
