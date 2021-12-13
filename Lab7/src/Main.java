@@ -15,41 +15,21 @@ public class Main {
         return result;
     }
 
-    private static void multiplyRegularWrapper(int rank) {
-        System.out.printf("Worker %d started\n", rank);
-
-        Object[] p = new Object[2];
-        Object[] q = new Object[2];
-        int[] begin = new int[1];
-        int[] end = new int[1];
-
-        MPI.COMM_WORLD.Recv(p, 0, 1, MPI.OBJECT, 0, 0);
-        MPI.COMM_WORLD.Recv(q, 0, 1, MPI.OBJECT, 0, 0);
-        MPI.COMM_WORLD.Recv(begin, 0, 1, MPI.INT, 0, 0);
-        MPI.COMM_WORLD.Recv(end, 0, 1, MPI.INT, 0, 0);
-
-        Polynomial result = Multiplication.sectionMultiplication((Polynomial) p[0], (Polynomial) q[0], begin[0], end[0]);
-
-        MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
-    }
-
-    private static void multiplicationMaster(Polynomial p, Polynomial q, int processCount, String type) {
+    private static void multiplicationMaster(Polynomial p, Polynomial q, int processCount) {
         long startTime = System.currentTimeMillis();
         int start;
         int finish = 0;
-        int len = Math.max(p.getDegree(), q.getDegree()) + 1 / (processCount - 1);
+        int sectionLength = Math.max(p.getDegree(), q.getDegree()) + 1 / (processCount - 1);
 
         for (int i = 1; i < processCount; i++) {
             start = finish;
-            finish += len;
+            finish += sectionLength;
             if (i == processCount - 1) {
                 finish = p.getDegree() + 1;
             }
-            MPI.COMM_WORLD.Send(new Object[]{p}, 0, 1, MPI.OBJECT, i, 0);
-            MPI.COMM_WORLD.Send(new Object[]{q}, 0, 1, MPI.OBJECT, i, 0);
 
-            MPI.COMM_WORLD.Send(new int[]{start}, 0, 1, MPI.INT, i, 0);
-            MPI.COMM_WORLD.Send(new int[]{finish}, 0, 1, MPI.INT, i, 0);
+            DTO currentSectionDTO = new DTO(p, q, start, finish);
+            MPI.COMM_WORLD.Send(new Object[]{currentSectionDTO}, 0, 1, MPI.OBJECT, i, 0);
         }
 
         Object[] results = new Object[processCount - 1];
@@ -58,36 +38,36 @@ public class Main {
         }
 
         Polynomial result = buildResult(results);
-        long endTime = System.currentTimeMillis();
-        System.out.println(type + " multiplication of polynomials:\n" + result);
-        System.out.println("Execution time: " + (endTime - startTime) + " ms");
+        System.out.println("Result:\n" + result);
+        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+    }
+
+    private static void multiplyRegularWrapper(int rank) {
+        System.out.printf("Worker %d started\n", rank);
+
+        Object[] currentSection = new Object[2];
+        MPI.COMM_WORLD.Recv(currentSection, 0, 1, MPI.OBJECT, 0, 0);
+        DTO currentSectionDTO = (DTO) currentSection[0];
+        Polynomial result = Multiplication.sectionMultiplication(currentSectionDTO.a, currentSectionDTO.b, currentSectionDTO.begin, currentSectionDTO.end);
+
+        MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
     }
 
     private static void multiplyKaratsubaWrapper(int rank) {
         System.out.printf("Worker %d started\n", rank);
 
-        Object[] p = new Object[2];
-        Object[] q = new Object[2];
-        int[] begin = new int[1];
-        int[] end = new int[1];
+        Object[] currentSection = new Object[2];
+        MPI.COMM_WORLD.Recv(currentSection, 0, 1, MPI.OBJECT, 0, 0);
+        DTO currentSectionDTO = (DTO) currentSection[0];
 
-        MPI.COMM_WORLD.Recv(p, 0, 1, MPI.OBJECT, 0, 0);
-        MPI.COMM_WORLD.Recv(q, 0, 1, MPI.OBJECT, 0, 0);
-
-        MPI.COMM_WORLD.Recv(begin, 0, 1, MPI.INT, 0, 0);
-        MPI.COMM_WORLD.Recv(end, 0, 1, MPI.INT, 0, 0);
-
-        Polynomial pp = (Polynomial) p[0];
-        Polynomial qq = (Polynomial) q[0];
-
-        for (int i = 0; i < begin[0]; i++) {
-            pp.getCoefficients().set(i, 0);
+        for (int i = 0; i < currentSectionDTO.begin; i++) {
+            currentSectionDTO.a.getCoefficients().set(i, 0);
         }
-        for (int j = end[0]; j < pp.getCoefficients().size(); j++) {
-            pp.getCoefficients().set(j, 0);
+        for (int j = currentSectionDTO.end; j < currentSectionDTO.a.getCoefficients().size(); j++) {
+            currentSectionDTO.a.getCoefficients().set(j, 0);
         }
 
-        Polynomial result = Multiplication.karatsubaSequentialMultiplication(pp, qq);
+        Polynomial result = Multiplication.karatsubaSequentialMultiplication(currentSectionDTO.a, currentSectionDTO.b);
 
         MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
     }
@@ -101,9 +81,10 @@ public class Main {
             Polynomial x = new Polynomial(Arrays.asList(1, 2, -2, 6, 3)); // 3x^4 + 6x^3 -2x^2 + 2x + 1
             Polynomial y = new Polynomial(Arrays.asList(4, -2, 3, 0, 7, 2, 1)); // x^6 + 2x^5 + 7x^4 + 3x^2 -2x + 4
             // 4X ^ 0 + 6X ^ 1 + -9X ^ 2 + 34X ^ 3 + 1X ^ 4 + 28X ^ 5 + 40X ^ 7 + 31X ^ 8 + 12X ^ 9 + 3X ^ 10
-            multiplicationMaster(x, y, size, "REGULAR");
+            multiplicationMaster(x, y, size);
         }
         else {
+            //multiplyRegularWrapper(rank);
             multiplyKaratsubaWrapper(rank);
         }
 
