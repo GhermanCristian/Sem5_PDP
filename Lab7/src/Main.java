@@ -4,18 +4,6 @@ import java.util.Arrays;
 public class Main {
     private static final int MASTER_PROCESS_RANK = 0;
 
-    private static Polynomial multiplyRegular(Object o, Object o1, int begin, int end) {
-        Polynomial p = (Polynomial) o;
-        Polynomial q = (Polynomial) o1;
-        Polynomial result = new Polynomial(p.getDegree() + q.getDegree());
-        for (int i = begin; i < end; i++) {
-            for (int j = 0; j < q.getCoefficients().size(); j++) {
-                result.getCoefficients().set(i + j, result.getCoefficients().get(i + j) + p.getCoefficients().get(i) * q.getCoefficients().get(j));
-            }
-        }
-        return result;
-    }
-
     private static Polynomial buildResult(Object[] results) {
         int degree = ((Polynomial) results[0]).getDegree();
         Polynomial result = new Polynomial(degree);
@@ -40,7 +28,7 @@ public class Main {
         MPI.COMM_WORLD.Recv(begin, 0, 1, MPI.INT, 0, 0);
         MPI.COMM_WORLD.Recv(end, 0, 1, MPI.INT, 0, 0);
 
-        Polynomial result = multiplyRegular(p[0], q[0], begin[0], end[0]);
+        Polynomial result = Multiplication.sectionMultiplication((Polynomial) p[0], (Polynomial) q[0], begin[0], end[0]);
 
         MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
     }
@@ -75,6 +63,35 @@ public class Main {
         System.out.println("Execution time: " + (endTime - startTime) + " ms");
     }
 
+    private static void multiplyKaratsubaWrapper(int rank) {
+        System.out.printf("Worker %d started\n", rank);
+
+        Object[] p = new Object[2];
+        Object[] q = new Object[2];
+        int[] begin = new int[1];
+        int[] end = new int[1];
+
+        MPI.COMM_WORLD.Recv(p, 0, 1, MPI.OBJECT, 0, 0);
+        MPI.COMM_WORLD.Recv(q, 0, 1, MPI.OBJECT, 0, 0);
+
+        MPI.COMM_WORLD.Recv(begin, 0, 1, MPI.INT, 0, 0);
+        MPI.COMM_WORLD.Recv(end, 0, 1, MPI.INT, 0, 0);
+
+        Polynomial pp = (Polynomial) p[0];
+        Polynomial qq = (Polynomial) q[0];
+
+        for (int i = 0; i < begin[0]; i++) {
+            pp.getCoefficients().set(i, 0);
+        }
+        for (int j = end[0]; j < pp.getCoefficients().size(); j++) {
+            pp.getCoefficients().set(j, 0);
+        }
+
+        Polynomial result = Multiplication.karatsubaSequentialMultiplication(pp, qq);
+
+        MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
+    }
+
     public static void main(String[] args) {
         MPI.Init(args);
         int rank = MPI.COMM_WORLD.Rank();
@@ -87,7 +104,7 @@ public class Main {
             multiplicationMaster(x, y, size, "REGULAR");
         }
         else {
-            multiplyRegularWrapper(rank);
+            multiplyKaratsubaWrapper(rank);
         }
 
         MPI.Finalize();
