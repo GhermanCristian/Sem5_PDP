@@ -1,14 +1,23 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Polynomial {
-    private List<Integer> coefficients;
+public class Polynomial implements Serializable {
+    private final List<Integer> coefficients;
     private int degree;
 
     public Polynomial(List<Integer> coefficients) {
         this.coefficients = new ArrayList<>();
         this.coefficients.addAll(coefficients);
         this.degree = this.coefficients.size() - 1; // polynomial of degree 0 still has a coefficient
+    }
+
+    public Polynomial(int degree) {
+        this.degree = degree;
+        this.coefficients = new ArrayList<>();
+        for (int i = 0; i <= this.degree; i++) {
+            this.coefficients.add(0);
+        }
     }
 
     public void removeLeadingZeroes() {
