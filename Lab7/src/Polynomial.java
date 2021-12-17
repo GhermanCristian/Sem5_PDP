@@ -27,7 +27,7 @@ public class Polynomial implements Serializable {
         }
     }
 
-    public void add(Polynomial other) {
+    public void addWithoutRemovingLeadingZeroes(Polynomial other) {
         int minDegree = other.degree;
         if (this.degree < other.degree) {
             minDegree = this.degree;
@@ -39,7 +39,6 @@ public class Polynomial implements Serializable {
         for (int i = 0; i <= minDegree; i++) {
             this.coefficients.set(i, this.coefficients.get(i) + other.coefficients.get(i));
         }
-        this.removeLeadingZeroes();
     }
 
     public void multiplyByMonomial(int monomialDegree) {

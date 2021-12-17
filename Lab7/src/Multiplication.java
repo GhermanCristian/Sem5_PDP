@@ -15,13 +15,11 @@ public class Multiplication {
             }
         }
 
-        Polynomial result = new Polynomial(coefficients);
-        result.removeLeadingZeroes();
-        return result;
+        return new Polynomial(coefficients);
     }
 
     public static Polynomial sectionMultiplication(Polynomial p, Polynomial q, int begin, int end) {
-        Polynomial result = new Polynomial(p.getDegree() + q.getDegree());
+        Polynomial result = new Polynomial(p.getDegree() + q.getDegree() + 1);
 
         for (int i = begin; i < end; i++) {
             for (int j = 0; j < q.getCoefficients().size(); j++) {
@@ -35,15 +33,15 @@ public class Multiplication {
     private static Polynomial computeMultiplicationResultFromParts(int halfLength, Polynomial a1B1, Polynomial a2B2, Polynomial middleTerm) {
         Polynomial result = new Polynomial(a1B1.getCoefficients()); // result = A1 * B1
         result.multiplyByMonomial(2 * halfLength); // result = A1 * B1 * X^2n
-        result.add(a2B2); // result = A1 * B1 * X^2n + A2 * B2
+        result.addWithoutRemovingLeadingZeroes(a2B2); // result = A1 * B1 * X^2n + A2 * B2
 
         a1B1.negate();
-        middleTerm.add(a1B1); // mt = (A1 + A2) * (B1 + B2) - A1 * B1
+        middleTerm.addWithoutRemovingLeadingZeroes(a1B1); // mt = (A1 + A2) * (B1 + B2) - A1 * B1
         a2B2.negate();
-        middleTerm.add(a2B2); // mt = (A1 + A2) * (B1 + B2) - A1 * B1 - A2 * B2
+        middleTerm.addWithoutRemovingLeadingZeroes(a2B2); // mt = (A1 + A2) * (B1 + B2) - A1 * B1 - A2 * B2
         middleTerm.multiplyByMonomial(halfLength); // mt = ((A1 + A2) * (B1 + B2) - A1 * B1 - A2 * B2) * X^n
 
-        result.add(middleTerm); // no need to also do removeLeadingZeroes - add does it
+        result.addWithoutRemovingLeadingZeroes(middleTerm); // no need to also do removeLeadingZeroes - add does it
         return result;
     }
 
@@ -61,9 +59,9 @@ public class Multiplication {
         Polynomial A1B1 = karatsubaSequentialMultiplication(A1, B1);
         Polynomial A2B2 = karatsubaSequentialMultiplication(A2, B2);
         Polynomial temp1 = new Polynomial(A1.getCoefficients());
-        temp1.add(A2); // A1 + A2
+        temp1.addWithoutRemovingLeadingZeroes(A2); // A1 + A2
         Polynomial temp2 = new Polynomial(B1.getCoefficients());
-        temp2.add(B2); // B1 + B2
+        temp2.addWithoutRemovingLeadingZeroes(B2); // B1 + B2
         Polynomial middleTerm = karatsubaSequentialMultiplication(temp1, temp2); // mt = (A1 + A2) * (B1 + B2)
 
         return computeMultiplicationResultFromParts(halfLength, A1B1, A2B2, middleTerm);

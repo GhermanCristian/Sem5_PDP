@@ -6,10 +6,10 @@ public class Main {
 
     private static Polynomial buildResult(Object[] results) {
         int degree = ((Polynomial) results[0]).getDegree();
-        Polynomial result = new Polynomial(degree);
+        Polynomial result = new Polynomial(degree + 1);
 
         for (Object polynomialParts: results) {
-            result.add((Polynomial) polynomialParts);
+            result.addWithoutRemovingLeadingZeroes((Polynomial) polynomialParts);
         }
         result.removeLeadingZeroes();
         return result;
@@ -19,7 +19,7 @@ public class Main {
         long startTime = System.currentTimeMillis();
         int start;
         int finish = 0;
-        int sectionLength = Math.max(p.getDegree(), q.getDegree()) + 1 / (processCount - 1);
+        int sectionLength = (p.getDegree() + 1) / (processCount - 1);
 
         for (int i = 1; i < processCount; i++) {
             start = finish;
