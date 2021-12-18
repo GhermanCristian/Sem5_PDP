@@ -22,7 +22,7 @@ public class Main {
 
     public static void process2Behaviour(DSMLibrary dsmLibrary) {
         dsmLibrary.subscribeCurrentProcessToVariable("b");
-        dsmLibrary.compareAndExchange("b", 1, 901);
+        dsmLibrary.compareAndExchange("b", 2, 901);
     }
 
     public static void main(String[] args) throws InterruptedException {

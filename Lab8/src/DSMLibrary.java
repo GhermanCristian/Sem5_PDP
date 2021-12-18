@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class DSMLibrary {
     private final Map<String, Set<Integer>> subscribers;
-    public static final Lock lock = new ReentrantLock();
+    private static final Lock lock = new ReentrantLock();
     private final Map<String, Integer> variables;
 
     public DSMLibrary() {
@@ -23,23 +23,21 @@ public class DSMLibrary {
         this.variables.keySet().forEach(variable -> this.subscribers.put(variable, new HashSet<>()));
     }
 
-    private void writeVariableAndSendMessage(String variableName, int newValue) {
+    public void setVariable(String variableName, int newValue) {
         this.variables.put(variableName, newValue);
-        this.sendMessageToSubscribers(variableName, new WriteMessage(variableName, newValue));
     }
 
     public void writeVariable(String variableName, int newValue) {
         lock.lock();
-        this.writeVariableAndSendMessage(variableName, newValue);
+        this.setVariable(variableName, newValue);
+        this.sendMessageToSubscribers(variableName, new WriteMessage(variableName, newValue));
         lock.unlock();
     }
 
     public void compareAndExchange(String variableName, int oldValue, int newValue) {
-        lock.lock();
         if (this.variables.get(variableName) == oldValue) {
-            this.writeVariableAndSendMessage(variableName, newValue);
+            this.writeVariable(variableName, newValue);
         }
-        lock.unlock();
     }
 
     public void addNewSubscriptionToVariable(String variableName, int processRank) {

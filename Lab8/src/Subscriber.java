@@ -30,7 +30,7 @@ public class Subscriber implements Runnable {
                 WriteMessage writeMessage = (WriteMessage) message;
                 System.out.println("Update message received");
                 System.out.println("Rank " + MPI.COMM_WORLD.Rank() + " received:" + writeMessage.variableName + "->" + writeMessage.newValue);
-                this.dsmLibrary.writeVariable(writeMessage.variableName, writeMessage.newValue);
+                this.dsmLibrary.setVariable(writeMessage.variableName, writeMessage.newValue);
             }
 
             System.out.println(this.dsmLibrary);
