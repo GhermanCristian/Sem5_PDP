@@ -40,14 +40,14 @@ public class MainMPI {
         int workerCount = size - 1;
         int minBound = root.getManhattanDistance();
         boolean found = false;
-        long time = System.currentTimeMillis();
+        long startingTime = System.currentTimeMillis();
 
         Queue<State> queue = generateStartingConfigurations(root, workerCount);
 
         while (!found) {
-            Queue<State> temp = new LinkedList<>(queue);
+            Queue<State> queueCopy = new LinkedList<>(queue);
             for (int i = 0; i < queue.size(); i++) { // send a starting state for each worker
-                MPI.COMM_WORLD.Send(new Object[]{new StateDTO(temp.poll(), minBound, false)}, 0, 1, MPI.OBJECT, i + 1, 0);
+                MPI.COMM_WORLD.Send(new Object[]{new StateDTO(queueCopy.poll(), minBound, false)}, 0, 1, MPI.OBJECT, i + 1, 0);
             }
 
             Object[] pairs = new Object[size + 5];
@@ -58,20 +58,18 @@ public class MainMPI {
             // check if any node found a solution
             int newMinBound = Integer.MAX_VALUE;
             for (int i = 0; i < queue.size(); i++) {
-                Pair<Integer, State> p = (Pair<Integer, State>) pairs[i];
-                if (p.getFirst() == -1) { // found solution
-                    System.out.println("Solution found in " + p.getSecond().getStepCount() + " steps");
-                    System.out.println("Solution is:\n" + p.getSecond());
-                    System.out.println("Execution time: " + (System.currentTimeMillis() - time) + " ms");
+                Pair<Integer, State> currentResponse = (Pair<Integer, State>) pairs[i];
+                if (currentResponse.getFirst() == -1) { // found solution
+                    System.out.println("Solution :\n" + currentResponse.getSecond());
+                    System.out.printf("Steps = %d\nTime = %d ms\n", currentResponse.getSecond().getStepCount(), (System.currentTimeMillis() - startingTime));
                     found = true;
                     break;
                 }
-                else if (p.getFirst() < newMinBound) {
-                    newMinBound = p.getFirst();
+                else if (currentResponse.getFirst() < newMinBound) {
+                    newMinBound = currentResponse.getFirst();
                 }
             }
             if(!found){
-                System.out.println("Current depth = " + newMinBound);
                 minBound = newMinBound;
             }
         }
@@ -90,36 +88,9 @@ public class MainMPI {
                 return;
             }
             int minBound = receivedDTO.getBound();
-            State current = receivedDTO.getState();
-            Pair<Integer, State> result = search(current, current.getStepCount(), minBound);
+            State currentState = receivedDTO.getState();
+            Pair<Integer, State> result = Common.search(currentState, currentState.getStepCount(), minBound);
             MPI.COMM_WORLD.Send(new Object[]{result}, 0, 1, MPI.OBJECT, 0, 0);
         }
-    }
-
-    public static Pair<Integer, State> search(State current, int stepCount, int bound) {
-        int estimation = stepCount + current.getManhattanDistance();
-        if (estimation > bound) {
-            return new Pair<>(estimation, current);
-        }
-        if (estimation > 80) {
-            return new Pair<>(estimation, current);
-        }
-        if (current.getManhattanDistance() == 0) {
-            return new Pair<>(-1, current);
-        }
-        int min = Integer.MAX_VALUE;
-        State solution = null;
-        for (State next : current.generateMoves()) {
-            Pair<Integer, State> result = search(next, stepCount + 1, bound);
-            int moveCount = result.getFirst();
-            if (moveCount == -1) {
-                return new Pair<>(-1, result.getSecond());
-            }
-            if (moveCount < min) {
-                min = moveCount;
-                solution = result.getSecond();
-            }
-        }
-        return new Pair<>(min, solution);
     }
 }
