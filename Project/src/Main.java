@@ -41,10 +41,9 @@ public class Main {
         }
 
         List<State> moves = currentState.generateMoves();
-
         List<Future<Pair<Integer, State>>> futures = new ArrayList<>();
         moves.forEach(nextMove -> futures.add(executorService.submit(
-                () -> searchParallel(nextMove, stepCount + 1, bound, threadCount / moves.size())
+            () -> searchParallel(nextMove, stepCount + 1, bound, threadCount / moves.size())
         )));
 
         int min = Integer.MAX_VALUE;

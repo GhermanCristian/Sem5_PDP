@@ -1,6 +1,7 @@
 import mpi.MPI;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class MainMPI {
@@ -25,11 +26,12 @@ public class MainMPI {
         while (true) {
             State queueHead = queue.peek();
             assert queueHead != null;
-            if (queue.size() + queueHead.generateMoves().size() - 1 > workerCount) {
+            List<State> generatedMoves = queueHead.generateMoves();
+            if (queue.size() + generatedMoves.size() - 1 > workerCount) {
                 break;
             }
             queue.poll();
-            queue.addAll(queueHead.generateMoves());
+            queue.addAll(generatedMoves);
         }
 
         return queue;
@@ -50,7 +52,7 @@ public class MainMPI {
                 MPI.COMM_WORLD.Send(new Object[]{new StateDTO(queueCopy.poll(), minBound, false)}, 0, 1, MPI.OBJECT, i + 1, 0);
             }
 
-            Object[] pairs = new Object[size + 5];
+            Object[] pairs = new Object[size + 1];
             for (int i = 1; i <= queue.size(); i++) {
                 MPI.COMM_WORLD.Recv(pairs, i - 1, 1, MPI.OBJECT, i, 0);
             }
